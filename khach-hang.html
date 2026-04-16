@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Khách hàng — Khánh An ERP</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <style>
+    .tab-bar { display: flex; gap: 0; border-bottom: 2px solid #e0e0e0; margin-bottom: 20px; }
+    .tab-btn { padding: 10px 24px; background: none; border: none; cursor: pointer; font-size: 14px; font-weight: 600; color: #757575; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+    .tab-btn.active { color: #36bfdc; border-bottom-color: #36bfdc; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Debt card */
+    .debt-card { border-radius: 12px; padding: 20px 24px; margin-bottom: 20px; }
+    .debt-card.has-debt { background: linear-gradient(135deg, #fff5f5, #ffebee); border: 2px solid #ffcdd2; }
+    .debt-card.no-debt  { background: linear-gradient(135deg, #f1fdf4, #e8f5e9); border: 2px solid #c8e6c9; }
+    .debt-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: #757575; margin-bottom: 8px; }
+    .debt-amount { font-size: 30px; font-weight: 800; }
+    .debt-amount.has-debt { color: #c62828; }
+    .debt-amount.no-debt  { color: #2e7d32; }
+    .debt-sub { font-size: 12px; color: #9e9e9e; margin-top: 6px; }
+
+    /* Info grid */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .info-item .lbl { font-size: 11px; color: #757575; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+    .info-item .val { font-size: 14px; color: #212121; }
+    #detail-info { padding: 20px 20px 16px; }
+
+    /* KH type badges */
+    .kh-cha { background: #e3f2fd; color: #1565c0; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+    .kh-con { background: #f3e5f5; color: #6a1b9a; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+
+    /* Detail layout */
+    .detail-layout { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 900px) { .detail-layout { grid-template-columns: 1fr; } }
+
+    /* Order mini row in detail */
+    .order-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; gap: 12px; }
+    .order-row:last-child { border-bottom: none; }
+
+    /* Stats row */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+    @media (max-width: 900px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+    .mini-stat { background: #fff; border-radius: 10px; padding: 16px 18px; border: 1px solid #e0e0e0; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+    .mini-stat .ms-label { font-size: 11px; color: #757575; font-weight: 700; text-transform: uppercase; }
+    .mini-stat .ms-value { font-size: 22px; font-weight: 800; color: #36bfdc; margin-top: 6px; }
+    .mini-stat .ms-value.red { color: #c62828; }
+    .mini-stat .ms-value.green { color: #2e7d32; }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <header class="top-header">
+      <div class="page-title">👤 Quản lý khách hàng</div>
+      <div class="header-actions">
+        <button class="btn-ka btn-ka-primary" onclick="openAddModal()">+ Thêm khách hàng</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- STATS ROW -->
+      <div class="stats-row" id="stats-row"></div>
+
+      <!-- TABS -->
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tab-btn-list" onclick="showTab('list')">📋 Danh sách</button>
+        <button class="tab-btn" id="tab-btn-detail" onclick="showTab('detail')" style="display:none;">
+          👤 <span id="tab-detail-label">Chi tiết</span>
+        </button>
+      </div>
+
+      <!-- TAB: DANH SÁCH -->
+      <div id="tab-list" class="tab-content active">
+        <!-- FILTER -->
+        <div class="filter-bar">
+          <div class="filter-group">
+            <label>Tìm kiếm</label>
+            <input type="text" id="search" placeholder="Tên, SĐT, email..." oninput="renderTable()" />
+          </div>
+          <div class="filter-group">
+            <label>Khu vực</label>
+            <select id="filter-kv" onchange="renderTable()">
+              <option value="">Tất cả</option>
+              <option value="SG">TP.HCM</option>
+              <option value="AG">An Giang</option>
+              <option value="CT">Cần Thơ</option>
+              <option value="TG">Tiền Giang</option>
+              <option value="LA">Long An</option>
+              <option value="DN">Đà Nẵng</option>
+              <option value="VL">Vĩnh Long</option>
+              <option value="DT">Đồng Tháp</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Loại</label>
+            <select id="filter-loai" onchange="renderTable()">
+              <option value="">Tất cả</option>
+              <option value="cha">Đại lý / Cha</option>
+              <option value="con">Chi nhánh / Con</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Trạng thái</label>
+            <select id="filter-status" onchange="renderTable()">
+              <option value="">Tất cả</option>
+              <option value="active">Hoạt động</option>
+              <option value="inactive">Ngưng</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Công nợ</label>
+            <select id="filter-congno" onchange="renderTable()">
+              <option value="">Tất cả</option>
+              <option value="co_no">Có nợ</option>
+              <option value="khong_no">Không nợ</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- TABLE -->
+        <div class="card">
+          <div class="card-header">
+            <h6>📋 Danh sách khách hàng</h6>
+            <span id="count-label" style="font-size:12px; color:#757575;"></span>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="ka-table">
+                <thead>
+                  <tr>
+                    <th>Mã KH</th>
+                    <th>Tên khách hàng</th>
+                    <th>Loại</th>
+                    <th>Khu vực</th>
+                    <th>Điện thoại</th>
+                    <th>Người phụ trách</th>
+                    <th style="text-align:right;">Công nợ</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: CHI TIẾT -->
+      <div id="tab-detail" class="tab-content">
+        <div class="detail-layout">
+          <!-- LEFT: Thông tin + Công nợ -->
+          <div>
+            <!-- Debt card -->
+            <div id="debt-card" class="debt-card has-debt">
+              <div class="debt-title">💰 Công nợ hiện tại</div>
+              <div id="debt-amount" class="debt-amount has-debt">0 ₫</div>
+              <div id="debt-sub" class="debt-sub"></div>
+            </div>
+
+            <!-- Info card -->
+            <div class="card" style="margin-bottom:0;">
+              <div class="card-header">
+                <h6 id="detail-name">—</h6>
+              </div>
+              <div class="card-body">
+                <div class="info-grid" id="detail-info"></div>
+              </div>
+              <div style="padding: 0 20px 16px; display:flex; gap:8px;">
+                <button class="btn-ka btn-ka-primary btn-ka-sm" id="btn-edit-kh" onclick="openEditModal()">✏️ Sửa thông tin</button>
+                <button class="btn-ka btn-ka-outline btn-ka-sm" id="btn-toggle-kh" onclick="toggleStatusDetail()">🔒 Vô hiệu hóa</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Đơn hàng -->
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <h6>📦 Lịch sử đơn hàng</h6>
+                <span id="order-count-label" style="font-size:12px; color:#757575;"></span>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="ka-table">
+                    <thead>
+                      <tr>
+                        <th>Số đơn</th>
+                        <th>Ngày</th>
+                        <th style="text-align:right;">Thành tiền</th>
+                        <th style="text-align:right;">Cần TT</th>
+                        <th>Trạng thái</th>
+                        <th>Xem</th>
+                      </tr>
+                    </thead>
+                    <tbody id="order-table-body"></tbody>
+                  </table>
+                </div>
+                <!-- Summary row -->
+                <div id="order-summary" style="margin-top:16px; padding:14px 18px; background:#e0f8fc; border-radius:8px; display:none;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                    <div style="display:flex; gap:24px;">
+                      <div>
+                        <div style="font-size:11px; color:#757575; font-weight:700; text-transform:uppercase;">Tổng đơn</div>
+                        <div style="font-weight:800; font-size:16px; color:#36bfdc;" id="sum-count">0</div>
+                      </div>
+                      <div>
+                        <div style="font-size:11px; color:#757575; font-weight:700; text-transform:uppercase;">Tổng doanh thu</div>
+                        <div style="font-weight:800; font-size:16px; color:#36bfdc;" id="sum-total">0</div>
+                      </div>
+                    </div>
+                    <div style="text-align:right;">
+                      <div style="font-size:11px; color:#757575; font-weight:700; text-transform:uppercase;">Còn cần thanh toán</div>
+                      <div style="font-weight:800; font-size:20px; color:#c62828;" id="sum-remaining">0</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-content -->
+  </div>
+</div>
+
+<!-- MODAL ADD/EDIT -->
+<div class="modal-overlay" id="modal-kh" onclick="if(event.target===this)closeModal('modal-kh')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h5 id="modal-kh-title">Thêm khách hàng</h5>
+      <button class="modal-close" onclick="closeModal('modal-kh')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label>Tên khách hàng <span style="color:red">*</span></label>
+          <input type="text" id="f-tenKH" placeholder="Cửa hàng / Đại lý..." />
+        </div>
+        <div class="form-group">
+          <label>Loại <span style="color:red">*</span></label>
+          <select id="f-loai" onchange="renderParentSelect()">
+            <option value="con">Chi nhánh / Con</option>
+            <option value="cha">Đại lý / Cha</option>
+          </select>
+        </div>
+        <div class="form-group" id="f-idCha-group">
+          <label>Thuộc đại lý (cha)</label>
+          <select id="f-idCha">
+            <option value="">— Không có —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Khu vực <span style="color:red">*</span></label>
+          <select id="f-khuVuc">
+            <option value="SG">TP.HCM</option>
+            <option value="AG">An Giang</option>
+            <option value="CT">Cần Thơ</option>
+            <option value="TG">Tiền Giang</option>
+            <option value="LA">Long An</option>
+            <option value="DN">Đà Nẵng</option>
+            <option value="VL">Vĩnh Long</option>
+            <option value="DT">Đồng Tháp</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Điện thoại</label>
+          <input type="text" id="f-sdt" placeholder="0901234567" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="f-email" placeholder="email@gmail.com" />
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label>Địa chỉ</label>
+          <input type="text" id="f-diaChi" placeholder="Số nhà, đường, quận/huyện, tỉnh..." />
+        </div>
+        <div class="form-group">
+          <label>Người phụ trách</label>
+          <select id="f-nguoiPhuTrach"></select>
+        </div>
+        <div class="form-group">
+          <label>Trạng thái</label>
+          <select id="f-trangThai">
+            <option value="active">Hoạt động</option>
+            <option value="inactive">Ngưng hoạt động</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Công nợ hiện tại (₫)</label>
+          <input type="number" id="f-congNo" placeholder="0" min="0" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ka btn-ka-outline" onclick="closeModal('modal-kh')">Hủy</button>
+      <button class="btn-ka btn-ka-primary" onclick="saveKhachHang()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container"></div>
+<script src="assets/js/app.js"></script>
+<script>
+let allKH = [];
+let allDonHang = [];
+let allAccounts = [];
+let allSanPham = [];
+let editingKHId = null;
+let viewingKH = null;
+
+async function main() {
+  const data = await initPage('khach-hang');
+  if (!data) return;
+  allKH       = JSON.parse(JSON.stringify(data.khachHang));
+  allDonHang  = JSON.parse(JSON.stringify(data.donHang));
+  allAccounts = data.accounts;
+  allSanPham  = data.sanPham;
+  renderStats();
+  renderTable();
+}
+
+/* ── Stats row ──────────────────────────────────────────────── */
+function renderStats() {
+  const total     = allKH.length;
+  const active    = allKH.filter(k => k.trangThai === 'active').length;
+  const tongNo    = allKH.reduce((s, k) => s + (k.congNo || 0), 0);
+  const coNo      = allKH.filter(k => (k.congNo || 0) > 0).length;
+
+  document.getElementById('stats-row').innerHTML = `
+    <div class="mini-stat">
+      <div class="ms-label">Tổng khách hàng</div>
+      <div class="ms-value">${total}</div>
+    </div>
+    <div class="mini-stat">
+      <div class="ms-label">Đang hoạt động</div>
+      <div class="ms-value green">${active}</div>
+    </div>
+    <div class="mini-stat">
+      <div class="ms-label">Tổng công nợ</div>
+      <div class="ms-value red">${fmtCurrencyShort(tongNo)}</div>
+    </div>
+    <div class="mini-stat">
+      <div class="ms-label">Khách có nợ</div>
+      <div class="ms-value red">${coNo} KH</div>
+    </div>
+  `;
+}
+
+/* ── Table ──────────────────────────────────────────────────── */
+function renderTable() {
+  const search  = document.getElementById('search').value.toLowerCase();
+  const kv      = document.getElementById('filter-kv').value;
+  const loai    = document.getElementById('filter-loai').value;
+  const status  = document.getElementById('filter-status').value;
+  const congno  = document.getElementById('filter-congno').value;
+
+  const filtered = allKH.filter(k => {
+    const ms = !search ||
+      k.tenKH.toLowerCase().includes(search) ||
+      (k.soDienThoai || '').includes(search) ||
+      (k.email || '').toLowerCase().includes(search) ||
+      k.maKH.toLowerCase().includes(search);
+    const mk = !kv     || k.khuVuc === kv;
+    const ml = !loai   || k.loai === loai;
+    const ms2= !status || k.trangThai === status;
+    const mc = !congno || (congno === 'co_no' ? (k.congNo || 0) > 0 : (k.congNo || 0) === 0);
+    return ms && mk && ml && ms2 && mc;
+  });
+
+  document.getElementById('count-label').textContent = `${filtered.length} khách hàng`;
+
+  const tbody = document.getElementById('table-body');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted" style="padding:32px;">Không có dữ liệu</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(k => {
+    const phuTrach = allAccounts.find(a => a.id === k.nguoiPhuTrach);
+    const congNoClass = (k.congNo || 0) > 0 ? 'color:#c62828; font-weight:700;' : 'color:#2e7d32;';
+    const loaiBadge = k.loai === 'cha'
+      ? `<span class="kh-cha">Đại lý</span>`
+      : `<span class="kh-con">Chi nhánh</span>`;
+
+    // Show parent name if con
+    let tenHienThi = k.tenKH;
+    if (k.loai === 'con' && k.idCha) {
+      const cha = allKH.find(x => x.id === k.idCha);
+      if (cha) tenHienThi = `<span style="color:#9e9e9e; font-size:11px;">↳ ${cha.tenKH}</span><br>${k.tenKH}`;
+    }
+
+    return `
+      <tr>
+        <td style="color:#757575; font-size:12px;">${k.maKH}</td>
+        <td class="fw-bold">${tenHienThi}</td>
+        <td>${loaiBadge}</td>
+        <td><span style="background:#e0f8fc; color:#36bfdc; padding:3px 8px; border-radius:4px; font-size:12px; font-weight:600;">${getKhuVucLabel(k.khuVuc)}</span></td>
+        <td>${k.soDienThoai || '—'}</td>
+        <td>${phuTrach ? phuTrach.hoTen : '—'}</td>
+        <td style="text-align:right; ${congNoClass}">${fmtCurrency(k.congNo || 0)}</td>
+        <td>${statusBadge(k.trangThai)}</td>
+        <td>
+          <div class="d-flex gap-8">
+            <button class="btn-ka btn-ka-outline btn-ka-sm" onclick="viewDetail('${k.id}')">👁 Xem</button>
+            <button class="btn-ka btn-ka-primary btn-ka-sm" onclick="openEditModalFor('${k.id}')">✏️</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+/* ── Tab switch ─────────────────────────────────────────────── */
+function showTab(name) {
+  document.getElementById('tab-list').classList.toggle('active', name === 'list');
+  document.getElementById('tab-detail').classList.toggle('active', name === 'detail');
+  document.getElementById('tab-btn-list').classList.toggle('active', name === 'list');
+  document.getElementById('tab-btn-detail').classList.toggle('active', name === 'detail');
+}
+
+/* ── Customer detail ────────────────────────────────────────── */
+function viewDetail(id) {
+  const k = allKH.find(x => x.id === id);
+  if (!k) return;
+  viewingKH = k;
+
+  // Show tab
+  document.getElementById('tab-btn-detail').style.display = '';
+  document.getElementById('tab-detail-label').textContent = k.tenKH;
+  showTab('detail');
+
+  // Debt card
+  const hasDebt = (k.congNo || 0) > 0;
+  const dc = document.getElementById('debt-card');
+  dc.className = `debt-card ${hasDebt ? 'has-debt' : 'no-debt'}`;
+  document.getElementById('debt-amount').className = `debt-amount ${hasDebt ? 'has-debt' : 'no-debt'}`;
+  document.getElementById('debt-amount').textContent = fmtCurrency(k.congNo || 0);
+  document.getElementById('debt-sub').textContent = hasDebt
+    ? 'Khách hàng còn nợ — cần thu tiền'
+    : '✓ Không có công nợ tồn đọng';
+
+  // Info grid
+  const phuTrach = allAccounts.find(a => a.id === k.nguoiPhuTrach);
+  const chaKH    = k.idCha ? allKH.find(x => x.id === k.idCha) : null;
+  const loaiBadge = k.loai === 'cha'
+    ? `<span class="kh-cha">Đại lý / Cha</span>`
+    : `<span class="kh-con">Chi nhánh / Con</span>`;
+
+  document.getElementById('detail-name').innerHTML = `${k.tenKH} <small style="font-weight:400; color:#757575;">${k.maKH}</small>`;
+  document.getElementById('detail-info').innerHTML = `
+    <div class="info-item"><div class="lbl">Loại</div><div class="val">${loaiBadge}</div></div>
+    <div class="info-item"><div class="lbl">Khu vực</div><div class="val"><span style="background:#e0f8fc; color:#36bfdc; padding:3px 10px; border-radius:4px; font-size:12px; font-weight:700;">${getKhuVucLabel(k.khuVuc)}</span></div></div>
+    <div class="info-item"><div class="lbl">Điện thoại</div><div class="val">${k.soDienThoai || '—'}</div></div>
+    <div class="info-item"><div class="lbl">Email</div><div class="val">${k.email || '—'}</div></div>
+    <div class="info-item" style="grid-column:1/-1;"><div class="lbl">Địa chỉ</div><div class="val">${k.diaChi || '—'}</div></div>
+    ${chaKH ? `<div class="info-item"><div class="lbl">Thuộc đại lý</div><div class="val"><a href="#" onclick="viewDetail('${chaKH.id}'); return false;" style="color:#36bfdc;">${chaKH.tenKH}</a></div></div>` : ''}
+    <div class="info-item"><div class="lbl">Người phụ trách</div><div class="val">${phuTrach ? phuTrach.hoTen : '—'}</div></div>
+    <div class="info-item"><div class="lbl">Trạng thái</div><div class="val">${statusBadge(k.trangThai)}</div></div>
+  `;
+
+  // Toggle button text
+  document.getElementById('btn-toggle-kh').textContent = k.trangThai === 'active' ? '🔒 Vô hiệu hóa' : '🔓 Kích hoạt';
+
+  // Orders
+  renderCustomerOrders(k.id);
+}
+
+function renderCustomerOrders(khId) {
+  const orders = allDonHang.filter(o => o.idKhachHang === khId);
+  const tbody = document.getElementById('order-table-body');
+
+  if (!orders.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted" style="padding:24px;">Chưa có đơn hàng</td></tr>`;
+    document.getElementById('order-count-label').textContent = '0 đơn';
+    document.getElementById('order-summary').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('order-count-label').textContent = `${orders.length} đơn hàng`;
+
+  let tongDoanhThu = 0;
+  let tongCanTT = 0;
+
+  tbody.innerHTML = orders.map(o => {
+    const thanhTien = calcOrderTotal(o, allSanPham);
+    const canTT     = calcSoTienCanTT(o, allSanPham);
+    tongDoanhThu += thanhTien;
+    if (o.trangThai !== 'hoan_thanh') tongCanTT += canTT;
+
+    const canTTStyle = canTT > 0 && o.trangThai !== 'hoan_thanh'
+      ? 'color:#c62828; font-weight:700;' : 'color:#2e7d32;';
+
+    return `
+      <tr>
+        <td class="fw-bold" style="color:#36bfdc;">${o.soDH}</td>
+        <td>${fmtDate(o.ngay)}</td>
+        <td style="text-align:right;">${fmtCurrency(thanhTien)}</td>
+        <td style="text-align:right; ${canTTStyle}">${o.trangThai === 'hoan_thanh' ? '<span style="color:#2e7d32;">✓ Đã TT</span>' : fmtCurrency(canTT)}</td>
+        <td>${statusBadge(o.trangThai)}</td>
+        <td><button class="btn-ka btn-ka-outline btn-ka-sm" onclick="goToOrder('${o.id}')">📄 Xem</button></td>
+      </tr>
+    `;
+  }).join('');
+
+  // Summary
+  document.getElementById('order-summary').style.display = '';
+  document.getElementById('sum-count').textContent = orders.length;
+  document.getElementById('sum-total').textContent = fmtCurrency(tongDoanhThu);
+  document.getElementById('sum-remaining').textContent = tongCanTT > 0 ? fmtCurrency(tongCanTT) : '✓ Không còn nợ';
+  if (tongCanTT === 0) {
+    document.getElementById('sum-remaining').style.color = '#2e7d32';
+  }
+}
+
+function goToOrder(orderId) {
+  // Navigate to ban-hang with order context (store in sessionStorage)
+  sessionStorage.setItem('ka_view_order', orderId);
+  window.location.href = 'ban-hang.html';
+}
+
+/* ── Modal ──────────────────────────────────────────────────── */
+function openAddModal() {
+  editingKHId = null;
+  document.getElementById('modal-kh-title').textContent = 'Thêm khách hàng';
+  document.getElementById('f-tenKH').value   = '';
+  document.getElementById('f-loai').value    = 'con';
+  document.getElementById('f-khuVuc').value  = 'SG';
+  document.getElementById('f-sdt').value     = '';
+  document.getElementById('f-email').value   = '';
+  document.getElementById('f-diaChi').value  = '';
+  document.getElementById('f-congNo').value  = '';
+  document.getElementById('f-trangThai').value = 'active';
+  populateStaff();
+  renderParentSelect();
+  openModal('modal-kh');
+}
+
+function openEditModalFor(id) {
+  const k = allKH.find(x => x.id === id);
+  if (!k) return;
+  editingKHId = id;
+  document.getElementById('modal-kh-title').textContent = 'Sửa khách hàng';
+  document.getElementById('f-tenKH').value   = k.tenKH;
+  document.getElementById('f-loai').value    = k.loai;
+  document.getElementById('f-khuVuc').value  = k.khuVuc;
+  document.getElementById('f-sdt').value     = k.soDienThoai || '';
+  document.getElementById('f-email').value   = k.email || '';
+  document.getElementById('f-diaChi').value  = k.diaChi || '';
+  document.getElementById('f-congNo').value  = k.congNo || 0;
+  document.getElementById('f-trangThai').value = k.trangThai;
+  populateStaff(k.nguoiPhuTrach);
+  renderParentSelect(k.idCha);
+  openModal('modal-kh');
+}
+
+function openEditModal() {
+  if (viewingKH) openEditModalFor(viewingKH.id);
+}
+
+function populateStaff(selected = '') {
+  const sel = document.getElementById('f-nguoiPhuTrach');
+  sel.innerHTML = allAccounts
+    .filter(a => a.trangThai === 'active')
+    .map(a => `<option value="${a.id}" ${a.id === selected ? 'selected' : ''}>${a.hoTen} (${getVaiTroLabel(a.vaiTro)})</option>`)
+    .join('');
+}
+
+function renderParentSelect(selectedId = '') {
+  const loai = document.getElementById('f-loai').value;
+  const group = document.getElementById('f-idCha-group');
+  group.style.display = loai === 'con' ? '' : 'none';
+
+  const sel = document.getElementById('f-idCha');
+  const parents = allKH.filter(k => k.loai === 'cha' && k.id !== editingKHId);
+  sel.innerHTML = `<option value="">— Không có —</option>` +
+    parents.map(k => `<option value="${k.id}" ${k.id === selectedId ? 'selected' : ''}>${k.tenKH}</option>`).join('');
+}
+
+function saveKhachHang() {
+  const tenKH = document.getElementById('f-tenKH').value.trim();
+  if (!tenKH) { showToast('Vui lòng nhập tên khách hàng.', 'error'); return; }
+
+  const loai   = document.getElementById('f-loai').value;
+  const idCha  = loai === 'con' ? (document.getElementById('f-idCha').value || null) : null;
+
+  const data = {
+    tenKH,
+    loai,
+    idCha,
+    khuVuc:       document.getElementById('f-khuVuc').value,
+    soDienThoai:  document.getElementById('f-sdt').value.trim(),
+    email:        document.getElementById('f-email').value.trim(),
+    diaChi:       document.getElementById('f-diaChi').value.trim(),
+    nguoiPhuTrach:document.getElementById('f-nguoiPhuTrach').value,
+    trangThai:    document.getElementById('f-trangThai').value,
+    congNo:       parseFloat(document.getElementById('f-congNo').value) || 0,
+  };
+
+  if (editingKHId) {
+    const idx = allKH.findIndex(x => x.id === editingKHId);
+    if (idx >= 0) {
+      Object.assign(allKH[idx], data);
+      if (viewingKH && viewingKH.id === editingKHId) {
+        viewingKH = allKH[idx];
+        viewDetail(editingKHId); // refresh detail
+      }
+    }
+    showToast('Cập nhật khách hàng thành công!');
+  } else {
+    const newId = 'KH' + String(allKH.length + 1).padStart(3, '0');
+    const newKH = { id: newId, maKH: newId, ...data };
+    allKH.push(newKH);
+    showToast('Thêm khách hàng thành công!');
+  }
+
+  closeModal('modal-kh');
+  renderTable();
+  renderStats();
+}
+
+function toggleStatusDetail() {
+  if (!viewingKH) return;
+  const k = allKH.find(x => x.id === viewingKH.id);
+  if (!k) return;
+  k.trangThai = k.trangThai === 'active' ? 'inactive' : 'active';
+  showToast(`Đã ${k.trangThai === 'active' ? 'kích hoạt' : 'vô hiệu hóa'} khách hàng ${k.tenKH}.`);
+  viewDetail(k.id);
+  renderTable();
+  renderStats();
+}
+
+main();
+</script>
+</body>
+</html>

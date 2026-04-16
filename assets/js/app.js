@@ -143,10 +143,11 @@ function renderSidebar(activePage) {
   const initials = user.hoTen.split(' ').map(w => w[0]).slice(-2).join('').toUpperCase();
 
   const navItems = [
-    { page: 'dashboard', icon: '📊', label: 'Dashboard', href: 'dashboard.html' },
-    { page: 'ban-hang', icon: '🛒', label: 'Bán hàng', href: 'ban-hang.html' },
-    { page: 'san-pham', icon: '📦', label: 'Sản phẩm', href: 'san-pham.html' },
-    { page: 'nhan-vien', icon: '👥', label: 'Nhân viên', href: 'nhan-vien.html' },
+    { page: 'dashboard',  icon: '📊', label: 'Dashboard',     href: 'dashboard.html' },
+    { page: 'ban-hang',   icon: '🛒', label: 'Bán hàng',      href: 'ban-hang.html' },
+    { page: 'khach-hang', icon: '👤', label: 'Khách hàng',    href: 'khach-hang.html' },
+    { page: 'san-pham',   icon: '📦', label: 'Sản phẩm',      href: 'san-pham.html' },
+    { page: 'nhan-vien',  icon: '👥', label: 'Nhân viên',     href: 'nhan-vien.html' },
   ];
 
   const navHTML = navItems.map(item => `

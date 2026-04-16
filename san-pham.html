@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sản phẩm — Khánh An ERP</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <style>
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .product-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .product-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.13); }
+    .product-card-img {
+      width: 100%; height: 120px;
+      background: linear-gradient(135deg, #e0f8fc, #b0e8f4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 48px;
+    }
+    .product-card-body { padding: 14px; }
+    .product-card-code { font-size: 11px; color: #9e9e9e; font-weight: 600; }
+    .product-card-name { font-size: 14px; font-weight: 700; color: #1a9ab8; margin: 4px 0 6px; }
+    .product-card-group { font-size: 11px; color: #757575; margin-bottom: 8px; }
+    .product-card-price { font-size: 15px; font-weight: 700; color: #36bfdc; }
+    .product-card-stock {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+    .stock-ok { background: #e0f8fc; color: #36bfdc; }
+    .stock-low { background: #fff3e0; color: #e65100; }
+    .stock-out { background: #ffebee; color: #c62828; }
+    .view-toggle { display: flex; gap: 6px; }
+    .view-btn {
+      padding: 6px 10px;
+      border: 1.5px solid #e0e0e0;
+      background: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+    .view-btn.active { background: #36bfdc; border-color: #36bfdc; color: #fff; }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <header class="top-header">
+      <div class="page-title">📦 Quản lý sản phẩm</div>
+      <div class="header-actions">
+        <div class="view-toggle">
+          <button class="view-btn active" id="btn-grid" onclick="setView('grid')" title="Lưới">⊞</button>
+          <button class="view-btn" id="btn-list" onclick="setView('list')" title="Danh sách">☰</button>
+        </div>
+        <button class="btn-ka btn-ka-primary" onclick="openAddModal()">+ Thêm sản phẩm</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- FILTER -->
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label>Tìm kiếm</label>
+          <input type="text" id="search" placeholder="Tên, mã sản phẩm..." oninput="renderProducts()" />
+        </div>
+        <div class="filter-group">
+          <label>Nhóm sản phẩm</label>
+          <select id="filter-group" onchange="renderProducts()">
+            <option value="">Tất cả</option>
+            <option value="Khánh An">Khánh An</option>
+            <option value="An Hạ">An Hạ</option>
+            <option value="Phúc An">Phúc An</option>
+            <option value="Gà bóng bò">Gà bóng bò</option>
+            <option value="Khác">Khác</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Tồn kho</label>
+          <select id="filter-stock" onchange="renderProducts()">
+            <option value="">Tất cả</option>
+            <option value="ok">Bình thường (≥ 300)</option>
+            <option value="low">Sắp hết (100–299)</option>
+            <option value="out">Cần nhập (< 100)</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Trạng thái</label>
+          <select id="filter-status" onchange="renderProducts()">
+            <option value="">Tất cả</option>
+            <option value="active">Đang bán</option>
+            <option value="inactive">Ngưng</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- SUMMARY CARDS -->
+      <div class="stats-grid" id="summary-cards" style="margin-bottom:20px;"></div>
+
+      <!-- PRODUCT VIEW -->
+      <div id="view-grid"></div>
+      <div id="view-list" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <h6>📋 Danh sách sản phẩm</h6>
+            <span id="count-label" style="font-size:12px;color:#757575;"></span>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="ka-table">
+                <thead>
+                  <tr>
+                    <th>Mã SP</th>
+                    <th>Tên sản phẩm</th>
+                    <th>Nhóm</th>
+                    <th>ĐVT</th>
+                    <th>Quy đổi</th>
+                    <th class="text-right">Đơn giá bán</th>
+                    <th class="text-right">Tồn kho</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADD/EDIT -->
+<div class="modal-overlay" id="modal-product">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h5 id="modal-title">Thêm sản phẩm</h5>
+      <button class="modal-close" onclick="closeModal('modal-product')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Mã sản phẩm <span style="color:red">*</span></label>
+          <input type="text" id="f-ma" placeholder="S11" />
+        </div>
+        <div class="form-group">
+          <label>Tên sản phẩm <span style="color:red">*</span></label>
+          <input type="text" id="f-ten" placeholder="Tên sản phẩm" />
+        </div>
+        <div class="form-group">
+          <label>Nhóm sản phẩm</label>
+          <input type="text" id="f-nhom" placeholder="Khánh An, An Hạ..." />
+        </div>
+        <div class="form-group">
+          <label>Đơn vị tính</label>
+          <select id="f-dvt">
+            <option value="gói">Gói</option>
+            <option value="thùng">Thùng</option>
+            <option value="kg">Kg</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Quy đổi</label>
+          <input type="text" id="f-quyDoi" placeholder="10 gói/thùng" />
+        </div>
+        <div class="form-group">
+          <label>Đơn giá nhập (₫)</label>
+          <input type="number" id="f-giaNhap" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label>Đơn giá bán (₫) <span style="color:red">*</span></label>
+          <input type="number" id="f-giaBan" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label>Tồn kho hiện tại</label>
+          <input type="number" id="f-ton" placeholder="0" />
+        </div>
+        <div class="form-group" style="grid-column: 1/-1;">
+          <label>Mô tả</label>
+          <textarea id="f-moTa" rows="2" placeholder="Mô tả sản phẩm..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Trạng thái</label>
+          <select id="f-status">
+            <option value="active">Đang bán</option>
+            <option value="inactive">Ngưng bán</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ka btn-ka-outline" onclick="closeModal('modal-product')">Hủy</button>
+      <button class="btn-ka btn-ka-primary" onclick="saveProduct()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETAIL -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h5 id="detail-title">Chi tiết sản phẩm</h5>
+      <button class="modal-close" onclick="closeModal('modal-detail')">×</button>
+    </div>
+    <div class="modal-body" id="detail-body"></div>
+    <div class="modal-footer">
+      <button class="btn-ka btn-ka-outline" onclick="closeModal('modal-detail')">Đóng</button>
+      <button class="btn-ka btn-ka-primary" id="btn-edit-detail">✏️ Sửa</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container"></div>
+
+<script src="assets/js/app.js"></script>
+<script>
+let allProducts = [];
+let currentView = 'grid';
+let editingId = null;
+
+const PRODUCT_EMOJI = {
+  'Khánh An': '🥩', 'An Hạ': '🍖', 'Phúc An': '🍗', 'Gà bóng bò': '🍳', 'Khác': '🌿'
+};
+
+function getEmoji(nhom) { return PRODUCT_EMOJI[nhom] || '📦'; }
+
+function getStockClass(ton) {
+  if (ton < 100) return ['stock-out', `Cần nhập (${ton})`];
+  if (ton < 300) return ['stock-low', `Sắp hết (${ton})`];
+  return ['stock-ok', `Còn ${ton}`];
+}
+
+async function main() {
+  const data = await initPage('san-pham');
+  if (!data) return;
+  allProducts = JSON.parse(JSON.stringify(data.sanPham));
+  renderSummary();
+  renderProducts();
+}
+
+function renderSummary() {
+  const total = allProducts.length;
+  const active = allProducts.filter(p => p.trangThai === 'active').length;
+  const low = allProducts.filter(p => p.tonKho < 300 && p.tonKho >= 100).length;
+  const out = allProducts.filter(p => p.tonKho < 100).length;
+  document.getElementById('summary-cards').innerHTML = `
+    <div class="stat-card green"><div class="stat-icon">📦</div><div>
+      <div class="stat-label">Tổng sản phẩm</div>
+      <div class="stat-value">${total}</div>
+      <div class="stat-sub">${active} đang bán</div>
+    </div></div>
+    <div class="stat-card blue"><div class="stat-icon">✅</div><div>
+      <div class="stat-label">Tồn kho bình thường</div>
+      <div class="stat-value">${total - low - out}</div>
+      <div class="stat-sub">sản phẩm</div>
+    </div></div>
+    <div class="stat-card orange"><div class="stat-icon">⚠️</div><div>
+      <div class="stat-label">Sắp hết hàng</div>
+      <div class="stat-value">${low}</div>
+      <div class="stat-sub">100–299 đơn vị</div>
+    </div></div>
+    <div class="stat-card red"><div class="stat-icon">🚨</div><div>
+      <div class="stat-label">Cần nhập ngay</div>
+      <div class="stat-value">${out}</div>
+      <div class="stat-sub">dưới 100 đơn vị</div>
+    </div></div>
+  `;
+}
+
+function filterProducts() {
+  const search = document.getElementById('search').value.toLowerCase();
+  const grp = document.getElementById('filter-group').value;
+  const stock = document.getElementById('filter-stock').value;
+  const status = document.getElementById('filter-status').value;
+  return allProducts.filter(p => {
+    const matchSearch = !search || p.tenSP.toLowerCase().includes(search) || p.maSP.toLowerCase().includes(search);
+    const matchGroup = !grp || p.nhomSP === grp;
+    const matchStock = !stock ||
+      (stock === 'ok' && p.tonKho >= 300) ||
+      (stock === 'low' && p.tonKho >= 100 && p.tonKho < 300) ||
+      (stock === 'out' && p.tonKho < 100);
+    const matchStatus = !status || p.trangThai === status;
+    return matchSearch && matchGroup && matchStock && matchStatus;
+  });
+}
+
+function renderProducts() {
+  const filtered = filterProducts();
+  document.getElementById('count-label').textContent = `${filtered.length} sản phẩm`;
+  if (currentView === 'grid') renderGrid(filtered);
+  else renderList(filtered);
+}
+
+function renderGrid(products) {
+  if (!products.length) {
+    document.getElementById('view-grid').innerHTML = `<div class="empty-state"><div class="empty-icon">📦</div><div>Không có sản phẩm nào</div></div>`;
+    return;
+  }
+  document.getElementById('view-grid').innerHTML = `
+    <div class="product-grid">
+      ${products.map(p => {
+        const [stockCls, stockLabel] = getStockClass(p.tonKho);
+        return `
+          <div class="product-card" onclick="viewDetail('${p.id}')">
+            <div class="product-card-img">${getEmoji(p.nhomSP)}</div>
+            <div class="product-card-body">
+              <div class="product-card-code">${p.maSP}</div>
+              <div class="product-card-name">${p.tenSP}</div>
+              <div class="product-card-group">Nhóm: ${p.nhomSP} · ${p.donViTinh}</div>
+              <div class="product-card-price">${fmtCurrency(p.donGiaBan)}</div>
+              <span class="product-card-stock ${stockCls}">${stockLabel}</span>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderList(products) {
+  if (!products.length) {
+    document.getElementById('table-body').innerHTML = `<tr><td colspan="9" class="text-center text-muted" style="padding:32px;">Không có dữ liệu</td></tr>`;
+    return;
+  }
+  document.getElementById('table-body').innerHTML = products.map(p => {
+    const [stockCls, stockLabel] = getStockClass(p.tonKho);
+    return `
+      <tr>
+        <td><code style="background:#f5f5f5;padding:2px 6px;border-radius:4px;">${p.maSP}</code></td>
+        <td class="fw-bold">${getEmoji(p.nhomSP)} ${p.tenSP}</td>
+        <td>${p.nhomSP}</td>
+        <td>${p.donViTinh}</td>
+        <td style="color:#757575;font-size:12px;">${p.quyDoi}</td>
+        <td class="text-right fw-bold text-primary">${fmtCurrency(p.donGiaBan)}</td>
+        <td class="text-right"><span class="product-card-stock ${stockCls}">${stockLabel}</span></td>
+        <td>${statusBadge(p.trangThai)}</td>
+        <td>
+          <div class="d-flex gap-8">
+            <button class="btn-ka btn-ka-outline btn-ka-sm" onclick="viewDetail('${p.id}')">👁</button>
+            <button class="btn-ka btn-ka-primary btn-ka-sm" onclick="editProduct('${p.id}')">✏️</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('view-grid').style.display = v === 'grid' ? '' : 'none';
+  document.getElementById('view-list').style.display = v === 'list' ? '' : 'none';
+  document.getElementById('btn-grid').classList.toggle('active', v === 'grid');
+  document.getElementById('btn-list').classList.toggle('active', v === 'list');
+  renderProducts();
+}
+
+function viewDetail(id) {
+  const p = allProducts.find(x => x.id === id);
+  if (!p) return;
+  const [stockCls, stockLabel] = getStockClass(p.tonKho);
+  document.getElementById('detail-title').textContent = p.tenSP;
+  document.getElementById('detail-body').innerHTML = `
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:64px;">${getEmoji(p.nhomSP)}</div>
+      <div style="font-size:11px;color:#9e9e9e;margin-top:4px;">${p.maSP}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div><div style="font-size:11px;color:#757575;font-weight:700;text-transform:uppercase;">Nhóm sản phẩm</div><div style="margin-top:4px;">${p.nhomSP}</div></div>
+      <div><div style="font-size:11px;color:#757575;font-weight:700;text-transform:uppercase;">Đơn vị tính</div><div style="margin-top:4px;">${p.donViTinh} — ${p.quyDoi}</div></div>
+      <div><div style="font-size:11px;color:#757575;font-weight:700;text-transform:uppercase;">Đơn giá nhập</div><div style="margin-top:4px;font-weight:700;">${fmtCurrency(p.donGia)}</div></div>
+      <div><div style="font-size:11px;color:#757575;font-weight:700;text-transform:uppercase;">Đơn giá bán</div><div style="margin-top:4px;font-weight:700;color:#2e7d32;">${fmtCurrency(p.donGiaBan)}</div></div>
+      <div><div style="font-size:11px;color:#757575;font-weight:700;text-transform:uppercase;">Tồn kho</div><div style="margin-top:4px;"><span class="product-card-stock ${stockCls}">${stockLabel}</span></div></div>
+      <div><div style="font-size:11px;color:#757575;font-weight:700;text-transform:uppercase;">Trạng thái</div><div style="margin-top:4px;">${statusBadge(p.trangThai)}</div></div>
+      <div style="grid-column:1/-1;"><div style="font-size:11px;color:#757575;font-weight:700;text-transform:uppercase;">Mô tả</div><div style="margin-top:4px;color:#555;">${p.moTa || '—'}</div></div>
+    </div>
+  `;
+  document.getElementById('btn-edit-detail').onclick = () => { closeModal('modal-detail'); editProduct(id); };
+  openModal('modal-detail');
+}
+
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'Thêm sản phẩm';
+  ['f-ma','f-ten','f-nhom','f-quyDoi','f-moTa'].forEach(id => document.getElementById(id).value = '');
+  ['f-giaNhap','f-giaBan','f-ton'].forEach(id => document.getElementById(id).value = 0);
+  document.getElementById('f-dvt').value = 'gói';
+  document.getElementById('f-status').value = 'active';
+  openModal('modal-product');
+}
+
+function editProduct(id) {
+  const p = allProducts.find(x => x.id === id);
+  if (!p) return;
+  editingId = id;
+  document.getElementById('modal-title').textContent = 'Sửa sản phẩm';
+  document.getElementById('f-ma').value = p.maSP;
+  document.getElementById('f-ten').value = p.tenSP;
+  document.getElementById('f-nhom').value = p.nhomSP;
+  document.getElementById('f-dvt').value = p.donViTinh;
+  document.getElementById('f-quyDoi').value = p.quyDoi;
+  document.getElementById('f-giaNhap').value = p.donGia;
+  document.getElementById('f-giaBan').value = p.donGiaBan;
+  document.getElementById('f-ton').value = p.tonKho;
+  document.getElementById('f-moTa').value = p.moTa || '';
+  document.getElementById('f-status').value = p.trangThai;
+  openModal('modal-product');
+}
+
+function saveProduct() {
+  const ten = document.getElementById('f-ten').value.trim();
+  const giaBan = parseInt(document.getElementById('f-giaBan').value) || 0;
+  if (!ten) { showToast('Vui lòng nhập tên sản phẩm.', 'error'); return; }
+
+  if (editingId) {
+    const idx = allProducts.findIndex(x => x.id === editingId);
+    if (idx >= 0) {
+      allProducts[idx] = {
+        ...allProducts[idx],
+        maSP: document.getElementById('f-ma').value.trim(),
+        tenSP: ten,
+        nhomSP: document.getElementById('f-nhom').value.trim(),
+        donViTinh: document.getElementById('f-dvt').value,
+        quyDoi: document.getElementById('f-quyDoi').value.trim(),
+        donGia: parseInt(document.getElementById('f-giaNhap').value) || 0,
+        donGiaBan: giaBan,
+        tonKho: parseInt(document.getElementById('f-ton').value) || 0,
+        moTa: document.getElementById('f-moTa').value.trim(),
+        trangThai: document.getElementById('f-status').value,
+      };
+    }
+    showToast('Cập nhật sản phẩm thành công!');
+  } else {
+    const newId = 'S' + String(allProducts.length + 1).padStart(2, '0');
+    allProducts.push({
+      id: newId, maSP: document.getElementById('f-ma').value.trim() || newId,
+      tenSP: ten, nhomSP: document.getElementById('f-nhom').value.trim() || 'Khác',
+      donViTinh: document.getElementById('f-dvt').value,
+      quyDoi: document.getElementById('f-quyDoi').value.trim(),
+      donGia: parseInt(document.getElementById('f-giaNhap').value) || 0,
+      donGiaBan: giaBan,
+      tonKho: parseInt(document.getElementById('f-ton').value) || 0,
+      moTa: document.getElementById('f-moTa').value.trim(),
+      trangThai: document.getElementById('f-status').value,
+    });
+    showToast('Thêm sản phẩm thành công!');
+  }
+  editingId = null;
+  closeModal('modal-product');
+  renderSummary();
+  renderProducts();
+}
+
+['modal-product','modal-detail'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) closeModal(id);
+  });
+});
+
+main();
+</script>
+</body>
+</html>

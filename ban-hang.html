@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bán hàng — Khánh An ERP</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+  <style>
+    .order-line { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .order-line-header { font-size: 11px; font-weight: 700; color: #757575; text-transform: uppercase; }
+    .line-total { font-weight: 700; color: #36bfdc; font-size: 13px; text-align: right; }
+    .order-grand-total { background: #e0f8fc; border-radius: 8px; padding: 14px 18px; }
+    .order-grand-total .row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; border-bottom: 1px solid #b0e8f4; }
+    .order-grand-total .row:last-child { border-bottom: none; font-size: 16px; font-weight: 700; color: #c62828; }
+    .tab-bar { display: flex; gap: 0; border-bottom: 2px solid #e0e0e0; margin-bottom: 20px; }
+    .tab-btn { padding: 10px 24px; background: none; border: none; cursor: pointer; font-size: 14px; font-weight: 600; color: #757575; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+    .tab-btn.active { color: #36bfdc; border-bottom-color: #36bfdc; }
+    .remove-line { background: none; border: none; cursor: pointer; color: #c62828; font-size: 18px; line-height: 1; padding: 2px 6px; border-radius: 4px; }
+    .remove-line:hover { background: #ffebee; }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main-content">
+    <header class="top-header">
+      <div class="page-title">🛒 Quản lý bán hàng</div>
+      <div class="header-actions">
+        <button class="btn-ka btn-ka-primary" onclick="showTab('tab-new')">+ Tạo đơn hàng</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- TABS -->
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tab-btn-list" onclick="showTab('tab-list')">📋 Danh sách đơn hàng</button>
+        <button class="tab-btn" id="tab-btn-new" onclick="openNewOrderTab()">➕ <span id="tab-new-label">Tạo đơn mới</span></button>
+      </div>
+
+      <!-- TAB: DANH SÁCH -->
+      <div id="tab-list">
+        <!-- FILTER -->
+        <div class="filter-bar">
+          <div class="filter-group">
+            <label>Tìm kiếm</label>
+            <input type="text" id="search" placeholder="Số đơn, khách hàng..." oninput="renderOrderList()" />
+          </div>
+          <div class="filter-group">
+            <label>Trạng thái</label>
+            <select id="filter-status" onchange="renderOrderList()">
+              <option value="">Tất cả</option>
+              <option value="nhap">Nháp</option>
+              <option value="cho_thanh_toan">Chờ thanh toán</option>
+              <option value="hoan_thanh">Hoàn thành</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Khu vực</label>
+            <select id="filter-kv" onchange="renderOrderList()">
+              <option value="">Tất cả</option>
+              <option value="SG">TP.HCM</option>
+              <option value="AG">An Giang</option>
+              <option value="CT">Cần Thơ</option>
+              <option value="TG">Tiền Giang</option>
+              <option value="LA">Long An</option>
+              <option value="DN">Đà Nẵng</option>
+              <option value="VL">Vĩnh Long</option>
+              <option value="DT">Đồng Tháp</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Từ ngày</label>
+            <input type="date" id="filter-from" onchange="renderOrderList()" />
+          </div>
+          <div class="filter-group">
+            <label>Đến ngày</label>
+            <input type="date" id="filter-to" onchange="renderOrderList()" />
+          </div>
+        </div>
+
+        <!-- SUMMARY -->
+        <div class="stats-grid" style="margin-bottom:16px;" id="order-summary"></div>
+
+        <!-- TABLE -->
+        <div class="card">
+          <div class="card-header">
+            <h6>📦 Đơn hàng</h6>
+            <span id="order-count" style="font-size:12px;color:#757575;"></span>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="ka-table">
+                <thead>
+                  <tr>
+                    <th>Số đơn</th>
+                    <th>Ngày</th>
+                    <th>Khách hàng</th>
+                    <th>Khu vực</th>
+                    <th class="text-right">Thành tiền</th>
+                    <th class="text-right">Cần thanh toán</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="order-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: TẠO ĐƠN -->
+      <div id="tab-new" style="display:none;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+
+          <!-- LEFT: Form -->
+          <div>
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-header"><h6 id="form-order-title">📝 Thông tin đơn hàng</h6></div>
+              <div class="card-body" style="padding:20px;">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>Ngày giao hàng</label>
+                    <input type="date" id="new-ngay" />
+                  </div>
+                  <div class="form-group">
+                    <label>Khách hàng <span style="color:red">*</span></label>
+                    <select id="new-kh" onchange="onKhachHangChange()">
+                      <option value="">-- Chọn khách hàng --</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="grid-column:1/-1;">
+                    <label>Ghi chú</label>
+                    <input type="text" id="new-ghichu" placeholder="Giao buổi sáng, yêu cầu đặc biệt..." />
+                  </div>
+                </div>
+
+                <!-- Công nợ cũ (auto-fill) -->
+                <div id="cong-no-box" style="display:none; margin-top:12px; background:#fff3e0; border-radius:6px; padding:10px 14px; font-size:13px;">
+                  <span style="color:#757575;">Công nợ cũ của khách:</span>
+                  <strong id="cong-no-val" style="color:#e65100; float:right;"></strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h6>🧾 Chi tiết sản phẩm</h6>
+                <button class="btn-ka btn-ka-outline btn-ka-sm" onclick="addLine()">+ Thêm dòng</button>
+              </div>
+              <div class="card-body" style="padding:20px;">
+                <div class="order-line order-line-header">
+                  <div>Sản phẩm</div><div>Số thùng giao</div><div>Số thùng tính tiền</div><div>Đơn giá (₫)</div><div></div>
+                </div>
+                <div id="order-lines"></div>
+                <button class="btn-ka btn-ka-outline" style="width:100%;margin-top:8px;" onclick="addLine()">+ Thêm sản phẩm</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Summary + submit -->
+          <div>
+            <div class="card" style="margin-bottom:16px; position:sticky; top:80px;">
+              <div class="card-header"><h6>💰 Tổng kết đơn hàng</h6></div>
+              <div class="card-body" style="padding:20px;">
+                <div class="order-grand-total">
+                  <div class="row"><span>Thành tiền:</span><span id="sum-thanhtien">0 ₫</span></div>
+                  <div class="row"><span>Cộng nợ cũ:</span><span id="sum-congno">0 ₫</span></div>
+                  <div class="row">
+                    <span>Trừ đã thanh toán:</span>
+                    <span>
+                      <input type="number" id="sum-dathanhtoan" value="0" min="0"
+                        style="width:110px;text-align:right;border:1px solid #90e0ef;border-radius:4px;padding:2px 6px;"
+                        oninput="recalc()" />
+                    </span>
+                  </div>
+                  <div class="row">
+                    <span>Chiết khấu:</span>
+                    <span>
+                      <input type="number" id="sum-ck" value="0" min="0"
+                        style="width:110px;text-align:right;border:1px solid #90e0ef;border-radius:4px;padding:2px 6px;"
+                        oninput="recalc()" />
+                    </span>
+                  </div>
+                  <div class="row"><span>TIỀN CẦN THANH TOÁN:</span><strong id="sum-cantt">0 ₫</strong></div>
+                </div>
+
+                <div style="margin-top:16px; display:flex; flex-direction:column; gap:10px;">
+                  <div class="form-group">
+                    <label>Trạng thái đơn</label>
+                    <select id="new-status">
+                      <option value="nhap">Nháp</option>
+                      <option value="cho_thanh_toan">Chờ thanh toán</option>
+                      <option value="hoan_thanh">Hoàn thành</option>
+                    </select>
+                  </div>
+                  <button class="btn-ka btn-ka-primary" style="width:100%;" onclick="submitOrder()">💾 Lưu đơn hàng</button>
+                  <button class="btn-ka btn-ka-outline" style="width:100%;" onclick="showTab('tab-list')">← Quay lại danh sách</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETAIL ĐƠN HÀNG -->
+<div class="modal-overlay" id="modal-order-detail">
+  <div class="modal-box modal-lg">
+    <div class="modal-header">
+      <h5 id="detail-order-title">Chi tiết đơn hàng</h5>
+      <button class="modal-close" onclick="closeModal('modal-order-detail')">×</button>
+    </div>
+    <div class="modal-body" id="detail-order-body"></div>
+    <div class="modal-footer">
+      <button class="btn-ka btn-ka-outline" onclick="closeModal('modal-order-detail')">Đóng</button>
+      <button class="btn-ka btn-ka-primary" id="btn-edit-order" style="display:none;" onclick="editOrderFromModal()">✏️ Sửa đơn</button>
+      <button class="btn-ka btn-ka-sm" id="btn-confirm-order" style="display:none;background:#7b1fa2;color:#fff;" onclick="confirmOrderFromModal()">✔ Xác nhận đơn</button>
+      <button class="btn-ka btn-ka-sm" id="btn-mark-done" style="display:none;background:#388e3c;color:#fff;" onclick="markAsDoneFromModal()">✅ Đã thanh toán</button>
+      <button class="btn-ka btn-ka-excel" id="btn-export-excel" style="display:none;">📥 Xuất Excel phiếu thanh toán</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container"></div>
+
+<script src="assets/js/app.js"></script>
+<script>
+let allOrders = [];
+let allProducts = [];
+let allKhachHang = [];
+let globalData = null;
+let viewingOrder = null;
+let orderLines = [];
+let editingOrderId = null; // null = tạo mới, có giá trị = đang sửa
+
+async function main() {
+  const data = await initPage('ban-hang');
+  if (!data) return;
+  globalData = data;
+  allOrders = JSON.parse(JSON.stringify(data.donHang));
+  allProducts = data.sanPham;
+  allKhachHang = data.khachHang;
+
+  // Populate khách hàng dropdown
+  const khSel = document.getElementById('new-kh');
+  allKhachHang.filter(k => k.trangThai === 'active').forEach(k => {
+    const opt = document.createElement('option');
+    opt.value = k.id;
+    opt.textContent = `${k.tenKH} (${getKhuVucLabel(k.khuVuc)})`;
+    khSel.appendChild(opt);
+  });
+
+  // Set default date
+  document.getElementById('new-ngay').value = new Date().toISOString().split('T')[0];
+
+  renderOrderSummary();
+  renderOrderList();
+  addLine(); // Start with 1 line
+}
+
+/* ---- TABS ---- */
+function showTab(tab) {
+  document.getElementById('tab-list').style.display = tab === 'tab-list' ? '' : 'none';
+  document.getElementById('tab-new').style.display  = tab === 'tab-new'  ? '' : 'none';
+  document.getElementById('tab-btn-list').classList.toggle('active', tab === 'tab-list');
+  document.getElementById('tab-btn-new').classList.toggle('active',  tab === 'tab-new');
+}
+
+function openNewOrderTab() {
+  // Reset về chế độ tạo mới
+  editingOrderId = null;
+  document.getElementById('tab-new-label').textContent = 'Tạo đơn mới';
+  document.getElementById('form-order-title').textContent = '📝 Thông tin đơn hàng mới';
+  document.getElementById('new-kh').value = '';
+  document.getElementById('new-ghichu').value = '';
+  document.getElementById('new-ngay').value = new Date().toISOString().split('T')[0];
+  document.getElementById('new-status').value = 'nhap';
+  document.getElementById('sum-dathanhtoan').value = 0;
+  document.getElementById('sum-ck').value = 0;
+  document.getElementById('cong-no-box').style.display = 'none';
+  document.getElementById('order-lines').innerHTML = '';
+  lineCount = 0;
+  addLine();
+  showTab('tab-new');
+}
+
+/* ---- ORDER LIST ---- */
+function renderOrderSummary() {
+  const total = allOrders.length;
+  const hoanThanh = allOrders.filter(o => o.trangThai === 'hoan_thanh').length;
+  const choTT = allOrders.filter(o => o.trangThai === 'cho_thanh_toan').length;
+  const tongDT = allOrders.reduce((s, o) => s + calcOrderTotal(o, allProducts), 0);
+  document.getElementById('order-summary').innerHTML = `
+    <div class="stat-card green"><div class="stat-icon">📋</div><div>
+      <div class="stat-label">Tổng đơn hàng</div><div class="stat-value">${total}</div>
+    </div></div>
+    <div class="stat-card blue"><div class="stat-icon">✅</div><div>
+      <div class="stat-label">Hoàn thành</div><div class="stat-value">${hoanThanh}</div>
+    </div></div>
+    <div class="stat-card orange"><div class="stat-icon">⏳</div><div>
+      <div class="stat-label">Chờ thanh toán</div><div class="stat-value">${choTT}</div>
+    </div></div>
+    <div class="stat-card red"><div class="stat-icon">💰</div><div>
+      <div class="stat-label">Tổng doanh thu</div>
+      <div class="stat-value">${fmtCurrencyShort(tongDT)}</div>
+    </div></div>
+  `;
+}
+
+function renderOrderList() {
+  const search = document.getElementById('search').value.toLowerCase();
+  const status = document.getElementById('filter-status').value;
+  const kv = document.getElementById('filter-kv').value;
+  const from = document.getElementById('filter-from').value;
+  const to = document.getElementById('filter-to').value;
+
+  const filtered = allOrders.filter(o => {
+    const kh = allKhachHang.find(k => k.id === o.idKhachHang);
+    const matchSearch = !search || o.soDH.toLowerCase().includes(search) || (kh && kh.tenKH.toLowerCase().includes(search));
+    const matchStatus = !status || o.trangThai === status;
+    const matchKV = !kv || (kh && kh.khuVuc === kv);
+    const matchFrom = !from || o.ngay >= from;
+    const matchTo = !to || o.ngay <= to;
+    return matchSearch && matchStatus && matchKV && matchFrom && matchTo;
+  });
+
+  document.getElementById('order-count').textContent = `${filtered.length} đơn hàng`;
+
+  const tbody = document.getElementById('order-table-body');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding:32px;">Không có đơn hàng nào</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(o => {
+    const kh = allKhachHang.find(k => k.id === o.idKhachHang);
+    const thanhTien = calcOrderTotal(o, allProducts);
+    const canTT = calcSoTienCanTT(o, allProducts);
+    const editable = isEditable(o);
+    return `
+      <tr>
+        <td><strong style="color:#1a9ab8;">${o.soDH}</strong></td>
+        <td>${fmtDate(o.ngay)}</td>
+        <td class="fw-bold">${kh ? kh.tenKH : o.idKhachHang}</td>
+        <td>${kh ? getKhuVucLabel(kh.khuVuc) : '—'}</td>
+        <td class="text-right">${fmtCurrency(thanhTien)}</td>
+        <td class="text-right fw-bold ${canTT > 0 ? 'text-danger' : 'text-success'}">${fmtCurrency(canTT)}</td>
+        <td>${statusBadge(o.trangThai)}</td>
+        <td>
+          <div class="d-flex gap-8" style="flex-wrap:wrap;">
+            <button class="btn-ka btn-ka-outline btn-ka-sm" onclick="viewOrderDetail('${o.id}')">👁 Xem</button>
+            ${editable ? `
+              <button class="btn-ka btn-ka-primary btn-ka-sm" onclick="editOrder('${o.id}')">✏️ Sửa</button>
+              <button class="btn-ka btn-ka-sm" style="background:#7b1fa2;color:#fff;" onclick="confirmOrder('${o.id}')">✔ Xác nhận</button>
+            ` : `
+              <button class="btn-ka btn-ka-excel btn-ka-sm" onclick="quickExport('${o.id}')">📥 Excel</button>
+            `}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function viewOrderDetail(id) {
+  const o = allOrders.find(x => x.id === id);
+  if (!o) return;
+  viewingOrder = o;
+  const kh = allKhachHang.find(k => k.id === o.idKhachHang);
+  const thanhTien = calcOrderTotal(o, allProducts);
+  const canTT = calcSoTienCanTT(o, allProducts);
+
+  document.getElementById('detail-order-title').textContent = `Đơn hàng ${o.soDH}`;
+
+  const linesHTML = o.chiTiet.map(item => {
+    const sp = allProducts.find(p => p.id === item.idSP);
+    const lineTotal = item.soThungTinhTien * item.donGia;
+    return `
+      <tr>
+        <td>${sp ? sp.tenSP : item.idSP}</td>
+        <td class="text-center">${fmtNumber(item.soThungGiao)}</td>
+        <td class="text-center">${fmtNumber(item.soThungTinhTien)}</td>
+        <td class="text-right">${fmtCurrency(item.donGia)}</td>
+        <td class="text-right fw-bold text-primary">${fmtCurrency(lineTotal)}</td>
+      </tr>
+    `;
+  }).join('');
+
+  document.getElementById('detail-order-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+      <div><div style="font-size:11px;color:#757575;font-weight:700;text-transform:uppercase;">Số đơn</div><div class="fw-bold" style="margin-top:4px;color:#1a9ab8;">${o.soDH}</div></div>
+      <div><div style="font-size:11px;color:#757575;font-weight:700;text-transform:uppercase;">Ngày giao</div><div style="margin-top:4px;">${fmtDate(o.ngay)}</div></div>
+      <div><div style="font-size:11px;color:#757575;font-weight:700;text-transform:uppercase;">Khách hàng</div><div class="fw-bold" style="margin-top:4px;">${kh ? kh.tenKH : o.idKhachHang}</div></div>
+      <div><div style="font-size:11px;color:#757575;font-weight:700;text-transform:uppercase;">Khu vực</div><div style="margin-top:4px;">${kh ? getKhuVucLabel(kh.khuVuc) : '—'}</div></div>
+      <div><div style="font-size:11px;color:#757575;font-weight:700;text-transform:uppercase;">Trạng thái</div><div style="margin-top:4px;">${statusBadge(o.trangThai)}</div></div>
+      <div><div style="font-size:11px;color:#757575;font-weight:700;text-transform:uppercase;">Ghi chú</div><div style="margin-top:4px;">${o.ghiChu || '—'}</div></div>
+    </div>
+
+    <table class="order-product-table">
+      <thead><tr><th>Sản phẩm</th><th>Thùng giao</th><th>Thùng tính tiền</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+      <tbody>${linesHTML}</tbody>
+    </table>
+
+    <div class="summary-box" style="margin-top:16px;">
+      <div class="summary-row"><span>Thành tiền:</span><span class="fw-bold">${fmtCurrency(thanhTien)}</span></div>
+      <div class="summary-row"><span>Cộng nợ cũ:</span><span>${fmtCurrency(o.congNoTruoc)}</span></div>
+      <div class="summary-row"><span>Trừ đã thanh toán:</span><span>- ${fmtCurrency(o.daThanhToan)}</span></div>
+      <div class="summary-row"><span>Trừ chiết khấu:</span><span>- ${fmtCurrency(o.chietKhau)}</span></div>
+      <div class="summary-row total"><span>TIỀN CẦN THANH TOÁN:</span><span>${fmtCurrency(canTT)}</span></div>
+    </div>
+  `;
+
+  const editable  = o.trangThai === 'nhap';
+  const waitingTT = o.trangThai === 'cho_thanh_toan';
+
+  document.getElementById('btn-edit-order').style.display    = editable  ? '' : 'none';
+  document.getElementById('btn-confirm-order').style.display = editable  ? '' : 'none';
+  document.getElementById('btn-mark-done').style.display     = waitingTT ? '' : 'none';
+  document.getElementById('btn-export-excel').style.display  = editable  ? 'none' : '';
+  document.getElementById('btn-export-excel').onclick = () => exportPhieuThanhToan(o, globalData);
+  openModal('modal-order-detail');
+}
+
+function quickExport(id) {
+  const o = allOrders.find(x => x.id === id);
+  if (o) exportPhieuThanhToan(o, globalData);
+}
+
+/* ---- EDIT ORDER ---- */
+function editOrder(id) {
+  const o = allOrders.find(x => x.id === id);
+  if (!o) return;
+  if (!isEditable(o)) { showToast('Chỉ được sửa đơn hàng ở trạng thái Nháp.', 'error'); return; }
+
+  editingOrderId = id;
+  document.getElementById('tab-new-label').textContent = 'Sửa đơn hàng';
+  document.getElementById('form-order-title').textContent = `✏️ Sửa đơn hàng — ${o.soDH}`;
+
+  // Fill thông tin cơ bản
+  document.getElementById('new-ngay').value = o.ngay;
+  document.getElementById('new-kh').value   = o.idKhachHang;
+  document.getElementById('new-ghichu').value = o.ghiChu || '';
+  document.getElementById('new-status').value = o.trangThai;
+  document.getElementById('sum-dathanhtoan').value = o.daThanhToan || 0;
+  document.getElementById('sum-ck').value = o.chietKhau || 0;
+
+  // Hiện công nợ cũ
+  const kh = allKhachHang.find(k => k.id === o.idKhachHang);
+  const box = document.getElementById('cong-no-box');
+  if (kh && kh.congNo > 0) {
+    document.getElementById('cong-no-val').textContent = fmtCurrency(kh.congNo);
+    box.style.display = '';
+  } else { box.style.display = 'none'; }
+
+  // Fill chi tiết sản phẩm
+  document.getElementById('order-lines').innerHTML = '';
+  lineCount = 0;
+  o.chiTiet.forEach(item => {
+    addLine();
+    const lines = document.querySelectorAll('#order-lines .order-line');
+    const lastLine = lines[lines.length - 1];
+    lastLine.querySelector('.line-sp').value = item.idSP;
+    lastLine.querySelector('.line-giao').value = item.soThungGiao;
+    lastLine.querySelector('.line-tinhtien').value = item.soThungTinhTien;
+    lastLine.querySelector('.line-gia').value = item.donGia;
+  });
+
+  recalc();
+  showTab('tab-new');
+}
+
+function editOrderFromModal() {
+  if (!viewingOrder) return;
+  closeModal('modal-order-detail');
+  editOrder(viewingOrder.id);
+}
+
+/* ---- CONFIRM ORDER ---- */
+function confirmOrder(id) {
+  const o = allOrders.find(x => x.id === id);
+  if (!o) return;
+  if (!isEditable(o)) { showToast('Đơn này đã được xác nhận.', 'error'); return; }
+  if (!confirm(`Xác nhận đơn hàng ${o.soDH}?\nSau khi xác nhận sẽ không thể chỉnh sửa.`)) return;
+  o.trangThai = 'cho_thanh_toan';
+  showToast(`Đơn ${o.soDH} đã được xác nhận!`, 'success');
+  renderOrderSummary();
+  renderOrderList();
+}
+
+function confirmOrderFromModal() {
+  if (!viewingOrder) return;
+  closeModal('modal-order-detail');
+  confirmOrder(viewingOrder.id);
+}
+
+/* ---- MARK AS DONE ---- */
+function markAsDone(id) {
+  const o = allOrders.find(x => x.id === id);
+  if (!o || o.trangThai !== 'cho_thanh_toan') return;
+  if (!confirm(`Xác nhận đơn ${o.soDH} đã thanh toán hoàn tất?\nSau khi hoàn thành sẽ không thể thay đổi.`)) return;
+  o.trangThai = 'hoan_thanh';
+  showToast(`Đơn ${o.soDH} đã hoàn thành!`, 'success');
+  renderOrderSummary();
+  renderOrderList();
+}
+
+function markAsDoneFromModal() {
+  if (!viewingOrder) return;
+  closeModal('modal-order-detail');
+  markAsDone(viewingOrder.id);
+}
+
+/* ---- CREATE ORDER ---- */
+function onKhachHangChange() {
+  const id = document.getElementById('new-kh').value;
+  const kh = allKhachHang.find(k => k.id === id);
+  const box = document.getElementById('cong-no-box');
+  if (kh && kh.congNo > 0) {
+    document.getElementById('cong-no-val').textContent = fmtCurrency(kh.congNo);
+    box.style.display = '';
+  } else {
+    box.style.display = 'none';
+  }
+  recalc();
+}
+
+let lineCount = 0;
+function addLine() {
+  lineCount++;
+  const lineId = `line-${lineCount}`;
+  const div = document.createElement('div');
+  div.className = 'order-line';
+  div.id = lineId;
+  div.innerHTML = `
+    <select class="line-sp" onchange="recalc()">
+      <option value="">-- Chọn sản phẩm --</option>
+      ${allProducts.map(p => `<option value="${p.id}" data-gia="${p.donGiaBan}">${p.tenSP}</option>`).join('')}
+    </select>
+    <input type="number" class="line-giao" min="0" value="0"
+      style="padding:7px;border:1.5px solid #e0e0e0;border-radius:6px;text-align:center;"
+      oninput="syncTinhTien(this); recalc()" />
+    <input type="number" class="line-tinhtien" min="0" value="0"
+      style="padding:7px;border:1.5px solid #e0e0e0;border-radius:6px;text-align:center;"
+      oninput="recalc()" />
+    <input type="number" class="line-gia" min="0" value="0"
+      style="padding:7px;border:1.5px solid #e0e0e0;border-radius:6px;text-align:right;"
+      oninput="recalc()" />
+    <button class="remove-line" onclick="removeLine('${lineId}')">×</button>
+  `;
+  // Auto-fill price on product select
+  div.querySelector('.line-sp').addEventListener('change', function() {
+    const opt = this.options[this.selectedIndex];
+    const gia = opt.dataset.gia || 0;
+    div.querySelector('.line-gia').value = gia;
+    recalc();
+  });
+  document.getElementById('order-lines').appendChild(div);
+}
+
+function syncTinhTien(input) {
+  const line = input.closest('.order-line');
+  line.querySelector('.line-tinhtien').value = input.value;
+}
+
+function removeLine(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+  recalc();
+}
+
+function recalc() {
+  const lines = document.querySelectorAll('#order-lines .order-line');
+  let thanhTien = 0;
+  lines.forEach(line => {
+    const tt = parseInt(line.querySelector('.line-tinhtien').value) || 0;
+    const gia = parseInt(line.querySelector('.line-gia').value) || 0;
+    thanhTien += tt * gia;
+  });
+
+  const khId = document.getElementById('new-kh').value;
+  const kh = allKhachHang.find(k => k.id === khId);
+  const congNo = kh ? (kh.congNo || 0) : 0;
+  const daTT = parseInt(document.getElementById('sum-dathanhtoan').value) || 0;
+  const ck = parseInt(document.getElementById('sum-ck').value) || 0;
+  const canTT = thanhTien + congNo - daTT - ck;
+
+  document.getElementById('sum-thanhtien').textContent = fmtCurrency(thanhTien);
+  document.getElementById('sum-congno').textContent = fmtCurrency(congNo);
+  document.getElementById('sum-cantt').textContent = fmtCurrency(canTT);
+}
+
+function submitOrder() {
+  const khId = document.getElementById('new-kh').value;
+  if (!khId) { showToast('Vui lòng chọn khách hàng.', 'error'); return; }
+
+  const lines = [];
+  document.querySelectorAll('#order-lines .order-line').forEach(line => {
+    const spId = line.querySelector('.line-sp').value;
+    const giao = parseInt(line.querySelector('.line-giao').value) || 0;
+    const tt   = parseInt(line.querySelector('.line-tinhtien').value) || 0;
+    const gia  = parseInt(line.querySelector('.line-gia').value) || 0;
+    if (spId && giao > 0) {
+      lines.push({ idSP: spId, soThungGiao: giao, soThungTinhTien: tt || giao, donGia: gia });
+    }
+  });
+  if (!lines.length) { showToast('Vui lòng thêm ít nhất 1 sản phẩm.', 'error'); return; }
+
+  const kh    = allKhachHang.find(k => k.id === khId);
+  const ngay  = document.getElementById('new-ngay').value;
+  const status = document.getElementById('new-status').value;
+
+  if (editingOrderId) {
+    // ── CẬP NHẬT đơn nháp ─────────────────────────────────
+    const idx = allOrders.findIndex(x => x.id === editingOrderId);
+    if (idx < 0) return;
+    const existing = allOrders[idx];
+    if (!isEditable(existing)) { showToast('Đơn đã xác nhận, không thể sửa.', 'error'); return; }
+
+    allOrders[idx] = {
+      ...existing,
+      ngay,
+      idKhachHang: khId,
+      chiTiet: lines,
+      congNoTruoc: kh ? (kh.congNo || 0) : 0,
+      daThanhToan: parseInt(document.getElementById('sum-dathanhtoan').value) || 0,
+      chietKhau:   parseInt(document.getElementById('sum-ck').value) || 0,
+      ghiChu:      document.getElementById('new-ghichu').value.trim(),
+      trangThai:   status,
+    };
+    showToast(`Cập nhật đơn ${existing.soDH} thành công!`, 'success');
+  } else {
+    // ── TẠO MỚI ───────────────────────────────────────────
+    const newId = 'DH' + String(allOrders.length + 1).padStart(3, '0');
+    const yy = ngay.slice(2, 4); const mm = ngay.slice(5, 7);
+    const soDH = `DH-${yy}${mm}${String(allOrders.length + 1).padStart(3, '0')}`;
+    allOrders.unshift({
+      id: newId, soDH, ngay,
+      idKhachHang: khId,
+      nguoiTao: CURRENT_USER.id,
+      chiTiet: lines,
+      congNoTruoc: kh ? (kh.congNo || 0) : 0,
+      daThanhToan: parseInt(document.getElementById('sum-dathanhtoan').value) || 0,
+      chietKhau:   parseInt(document.getElementById('sum-ck').value) || 0,
+      ghiChu:      document.getElementById('new-ghichu').value.trim(),
+      trangThai:   status,
+    });
+    showToast(`Tạo đơn ${soDH} thành công!`, 'success');
+  }
+
+  editingOrderId = null;
+  renderOrderSummary();
+  renderOrderList();
+  showTab('tab-list');
+
+  // Reset form về trạng thái tạo mới
+  document.getElementById('tab-new-label').textContent = 'Tạo đơn mới';
+  document.getElementById('form-order-title').textContent = '📝 Thông tin đơn hàng mới';
+  document.getElementById('new-kh').value = '';
+  document.getElementById('new-ghichu').value = '';
+  document.getElementById('new-status').value = 'nhap';
+  document.getElementById('sum-dathanhtoan').value = 0;
+  document.getElementById('sum-ck').value = 0;
+  document.getElementById('cong-no-box').style.display = 'none';
+  document.getElementById('order-lines').innerHTML = '';
+  lineCount = 0;
+  addLine();
+}
+
+document.getElementById('modal-order-detail').addEventListener('click', function(e) {
+  if (e.target === this) closeModal('modal-order-detail');
+});
+
+main();
+</script>
+</body>
+</html>

@@ -1,0 +1,497 @@
+{
+  "config": {
+    "appName": "Khánh An ERP",
+    "company": "Công ty TNHH Thực Phẩm Khánh An",
+    "address": "TP. Hồ Chí Minh",
+    "phone": "0983 763 434",
+    "email": "thucphamkhanhan@gmail.com",
+    "website": "thucphamkhanhan.com"
+  },
+
+  "accounts": [
+    {
+      "id": "U001",
+      "username": "admin",
+      "password": "admin123",
+      "hoTen": "Nguyễn Văn Admin",
+      "vaiTro": "admin",
+      "email": "admin@khanhan.vn",
+      "soDienThoai": "0901111111",
+      "trangThai": "active"
+    },
+    {
+      "id": "U002",
+      "username": "kinhdoanh1",
+      "password": "kd123",
+      "hoTen": "Trần Thị Bích",
+      "vaiTro": "kinh_doanh",
+      "email": "bich@khanhan.vn",
+      "soDienThoai": "0902222222",
+      "trangThai": "active"
+    },
+    {
+      "id": "U003",
+      "username": "ketoan1",
+      "password": "kt123",
+      "hoTen": "Lê Thị Cẩm",
+      "vaiTro": "ke_toan",
+      "email": "cam@khanhan.vn",
+      "soDienThoai": "0903333333",
+      "trangThai": "active"
+    },
+    {
+      "id": "U004",
+      "username": "kho1",
+      "password": "kho123",
+      "hoTen": "Phạm Văn Đức",
+      "vaiTro": "thu_kho",
+      "email": "duc@khanhan.vn",
+      "soDienThoai": "0904444444",
+      "trangThai": "active"
+    },
+    {
+      "id": "U005",
+      "username": "kinhdoanh2",
+      "password": "kd456",
+      "hoTen": "Hoàng Minh Em",
+      "vaiTro": "kinh_doanh",
+      "email": "em@khanhan.vn",
+      "soDienThoai": "0905555555",
+      "trangThai": "inactive"
+    }
+  ],
+
+  "vaiTros": [
+    { "id": "admin", "tenVaiTro": "Quản trị viên", "moTa": "Toàn quyền hệ thống" },
+    { "id": "kinh_doanh", "tenVaiTro": "Kinh doanh", "moTa": "Quản lý đơn hàng, khách hàng" },
+    { "id": "ke_toan", "tenVaiTro": "Kế toán", "moTa": "Quản lý tài chính, công nợ" },
+    { "id": "thu_kho", "tenVaiTro": "Thủ kho", "moTa": "Quản lý kho, xuất nhập hàng" }
+  ],
+
+  "sanPham": [
+    {
+      "id": "S01",
+      "maSP": "S01",
+      "tenSP": "Khánh An 1kg",
+      "nhomSP": "Khánh An",
+      "donViTinh": "gói",
+      "quyDoi": "10 gói/thùng",
+      "donGia": 85000,
+      "donGiaBan": 90000,
+      "tonKho": 1250,
+      "moTa": "Chả chay Khánh An loại 1kg, đóng gói hút chân không",
+      "trangThai": "active"
+    },
+    {
+      "id": "S02",
+      "maSP": "S02",
+      "tenSP": "Khánh An 100g",
+      "nhomSP": "Khánh An",
+      "donViTinh": "gói",
+      "quyDoi": "10 gói/thùng",
+      "donGia": 9000,
+      "donGiaBan": 10000,
+      "tonKho": 3400,
+      "moTa": "Chả chay Khánh An loại 100g, tiện lợi",
+      "trangThai": "active"
+    },
+    {
+      "id": "S03",
+      "maSP": "S03",
+      "tenSP": "Khánh An xá",
+      "nhomSP": "Khánh An",
+      "donViTinh": "thùng",
+      "quyDoi": "10kg/thùng",
+      "donGia": 750000,
+      "donGiaBan": 800000,
+      "tonKho": 420,
+      "moTa": "Chả chay Khánh An bán xá (bulk), 10kg/thùng",
+      "trangThai": "active"
+    },
+    {
+      "id": "S04",
+      "maSP": "S04",
+      "tenSP": "An Hạ xá",
+      "nhomSP": "An Hạ",
+      "donViTinh": "thùng",
+      "quyDoi": "10kg/thùng",
+      "donGia": 640000,
+      "donGiaBan": 680000,
+      "tonKho": 890,
+      "moTa": "Chả chay An Hạ bán xá, 10kg/thùng — sản phẩm bán chạy nhất",
+      "trangThai": "active"
+    },
+    {
+      "id": "S05",
+      "maSP": "S05",
+      "tenSP": "Phúc An 1kg",
+      "nhomSP": "Phúc An",
+      "donViTinh": "gói",
+      "quyDoi": "10 gói/thùng",
+      "donGia": 78000,
+      "donGiaBan": 85000,
+      "tonKho": 670,
+      "moTa": "Chả chay Phúc An loại 1kg",
+      "trangThai": "active"
+    },
+    {
+      "id": "S06",
+      "maSP": "S06",
+      "tenSP": "Phúc An 100g",
+      "nhomSP": "Phúc An",
+      "donViTinh": "gói",
+      "quyDoi": "10 gói/thùng",
+      "donGia": 8500,
+      "donGiaBan": 9500,
+      "tonKho": 2100,
+      "moTa": "Chả chay Phúc An loại 100g",
+      "trangThai": "active"
+    },
+    {
+      "id": "S07",
+      "maSP": "S07",
+      "tenSP": "Gà bóng bò 1kg",
+      "nhomSP": "Gà bóng bò",
+      "donViTinh": "gói",
+      "quyDoi": "10 gói/thùng",
+      "donGia": 92000,
+      "donGiaBan": 100000,
+      "tonKho": 530,
+      "moTa": "Gà bóng bò chay loại 1kg",
+      "trangThai": "active"
+    },
+    {
+      "id": "S08",
+      "maSP": "S08",
+      "tenSP": "Gà bóng bò 100g",
+      "nhomSP": "Gà bóng bò",
+      "donViTinh": "gói",
+      "quyDoi": "10 gói/thùng",
+      "donGia": 10000,
+      "donGiaBan": 11000,
+      "tonKho": 1800,
+      "moTa": "Gà bóng bò chay loại 100g",
+      "trangThai": "active"
+    },
+    {
+      "id": "S09",
+      "maSP": "S09",
+      "tenSP": "Gà bóng bò xá",
+      "nhomSP": "Gà bóng bò",
+      "donViTinh": "thùng",
+      "quyDoi": "10kg/thùng",
+      "donGia": 820000,
+      "donGiaBan": 870000,
+      "tonKho": 310,
+      "moTa": "Gà bóng bò chay bán xá 10kg/thùng",
+      "trangThai": "active"
+    },
+    {
+      "id": "S10",
+      "maSP": "S10",
+      "tenSP": "Sườn đứt",
+      "nhomSP": "Khác",
+      "donViTinh": "thùng",
+      "quyDoi": "10kg/thùng",
+      "donGia": 550000,
+      "donGiaBan": 600000,
+      "tonKho": 145,
+      "moTa": "Sườn đứt chay, 10kg/thùng",
+      "trangThai": "active"
+    }
+  ],
+
+  "khachHang": [
+    {
+      "id": "KH001",
+      "maKH": "KH001",
+      "tenKH": "Cửa hàng Bình Minh",
+      "loai": "con",
+      "idCha": null,
+      "khuVuc": "SG",
+      "diaChi": "123 Nguyễn Trãi, Q.5, TP.HCM",
+      "soDienThoai": "0281234567",
+      "email": "binhminh@gmail.com",
+      "nguoiPhuTrach": "U002",
+      "congNo": 15200000,
+      "trangThai": "active"
+    },
+    {
+      "id": "KH002",
+      "maKH": "KH002",
+      "tenKH": "Siêu thị Xanh An Giang",
+      "loai": "cha",
+      "idCha": null,
+      "khuVuc": "AG",
+      "diaChi": "45 Trần Hưng Đạo, Long Xuyên, An Giang",
+      "soDienThoai": "02963456789",
+      "email": "xanhag@gmail.com",
+      "nguoiPhuTrach": "U002",
+      "congNo": 48500000,
+      "trangThai": "active"
+    },
+    {
+      "id": "KH003",
+      "maKH": "KH003",
+      "tenKH": "Xanh AG - Chi nhánh Châu Đốc",
+      "loai": "con",
+      "idCha": "KH002",
+      "khuVuc": "AG",
+      "diaChi": "78 Nguyễn Hữu Cảnh, Châu Đốc, An Giang",
+      "soDienThoai": "02963111222",
+      "email": "xanhag.chaudoc@gmail.com",
+      "nguoiPhuTrach": "U002",
+      "congNo": 0,
+      "trangThai": "active"
+    },
+    {
+      "id": "KH004",
+      "maKH": "KH004",
+      "tenKH": "Đại lý Cần Thơ Phát",
+      "loai": "cha",
+      "idCha": null,
+      "khuVuc": "CT",
+      "diaChi": "99 3/2, Ninh Kiều, Cần Thơ",
+      "soDienThoai": "02923456789",
+      "email": "canthotphat@gmail.com",
+      "nguoiPhuTrach": "U005",
+      "congNo": 72000000,
+      "trangThai": "active"
+    },
+    {
+      "id": "KH005",
+      "maKH": "KH005",
+      "tenKH": "Cần Thơ Phát - Bình Thủy",
+      "loai": "con",
+      "idCha": "KH004",
+      "khuVuc": "CT",
+      "diaChi": "22 Lê Hồng Phong, Bình Thủy, Cần Thơ",
+      "soDienThoai": "02923111333",
+      "email": "",
+      "nguoiPhuTrach": "U005",
+      "congNo": 0,
+      "trangThai": "active"
+    },
+    {
+      "id": "KH006",
+      "maKH": "KH006",
+      "tenKH": "Chay Tịnh Tiền Giang",
+      "loai": "con",
+      "idCha": null,
+      "khuVuc": "TG",
+      "diaChi": "34 Ấp Bắc, Mỹ Tho, Tiền Giang",
+      "soDienThoai": "02733456789",
+      "email": "chaytinh.tg@gmail.com",
+      "nguoiPhuTrach": "U002",
+      "congNo": 22000000,
+      "trangThai": "active"
+    },
+    {
+      "id": "KH007",
+      "maKH": "KH007",
+      "tenKH": "Đại lý Long An Xanh",
+      "loai": "con",
+      "idCha": null,
+      "khuVuc": "LA",
+      "diaChi": "56 Nguyễn Đình Chiểu, Tân An, Long An",
+      "soDienThoai": "02723456789",
+      "email": "laxanh@gmail.com",
+      "nguoiPhuTrach": "U002",
+      "congNo": 31500000,
+      "trangThai": "active"
+    },
+    {
+      "id": "KH008",
+      "maKH": "KH008",
+      "tenKH": "Thực Dưỡng Đà Nẵng",
+      "loai": "con",
+      "idCha": null,
+      "khuVuc": "DN",
+      "diaChi": "88 Lê Duẩn, Hải Châu, Đà Nẵng",
+      "soDienThoai": "02363456789",
+      "email": "thucduong.dn@gmail.com",
+      "nguoiPhuTrach": "U002",
+      "congNo": 18000000,
+      "trangThai": "active"
+    },
+    {
+      "id": "KH009",
+      "maKH": "KH009",
+      "tenKH": "Vĩnh Long Phước Huệ",
+      "loai": "con",
+      "idCha": null,
+      "khuVuc": "VL",
+      "diaChi": "12 Phạm Thái Bường, Vĩnh Long",
+      "soDienThoai": "02703456789",
+      "email": "phuochue.vl@gmail.com",
+      "nguoiPhuTrach": "U002",
+      "congNo": 9500000,
+      "trangThai": "active"
+    },
+    {
+      "id": "KH010",
+      "maKH": "KH010",
+      "tenKH": "Chay An Lành Đồng Tháp",
+      "loai": "con",
+      "idCha": null,
+      "khuVuc": "DT",
+      "diaChi": "66 Nguyễn Huệ, Cao Lãnh, Đồng Tháp",
+      "soDienThoai": "02773456789",
+      "email": "anlanh.dt@gmail.com",
+      "nguoiPhuTrach": "U002",
+      "congNo": 14800000,
+      "trangThai": "active"
+    }
+  ],
+
+  "donHang": [
+    {
+      "id": "DH001",
+      "soDH": "DH-2601001",
+      "ngay": "2026-01-05",
+      "idKhachHang": "KH002",
+      "nguoiTao": "U002",
+      "chiTiet": [
+        { "idSP": "S04", "soThungGiao": 20, "soThungTinhTien": 20, "donGia": 680000 },
+        { "idSP": "S01", "soThungGiao": 5, "soThungTinhTien": 5, "donGia": 90000 }
+      ],
+      "congNoTruoc": 30000000,
+      "daThanhToan": 25000000,
+      "chietKhau": 0,
+      "ghiChu": "Giao buổi sáng",
+      "trangThai": "hoan_thanh"
+    },
+    {
+      "id": "DH002",
+      "soDH": "DH-2601002",
+      "ngay": "2026-01-08",
+      "idKhachHang": "KH004",
+      "nguoiTao": "U002",
+      "chiTiet": [
+        { "idSP": "S04", "soThungGiao": 30, "soThungTinhTien": 30, "donGia": 680000 },
+        { "idSP": "S03", "soThungGiao": 10, "soThungTinhTien": 10, "donGia": 800000 }
+      ],
+      "congNoTruoc": 45000000,
+      "daThanhToan": 40000000,
+      "chietKhau": 1000000,
+      "ghiChu": "",
+      "trangThai": "hoan_thanh"
+    },
+    {
+      "id": "DH003",
+      "soDH": "DH-2601015",
+      "ngay": "2026-01-15",
+      "idKhachHang": "KH006",
+      "nguoiTao": "U002",
+      "chiTiet": [
+        { "idSP": "S04", "soThungGiao": 15, "soThungTinhTien": 15, "donGia": 680000 },
+        { "idSP": "S07", "soThungGiao": 8, "soThungTinhTien": 8, "donGia": 100000 }
+      ],
+      "congNoTruoc": 10000000,
+      "daThanhToan": 10000000,
+      "chietKhau": 500000,
+      "ghiChu": "Khách trả đủ",
+      "trangThai": "hoan_thanh"
+    },
+    {
+      "id": "DH004",
+      "soDH": "DH-2602010",
+      "ngay": "2026-02-10",
+      "idKhachHang": "KH001",
+      "nguoiTao": "U002",
+      "chiTiet": [
+        { "idSP": "S04", "soThungGiao": 12, "soThungTinhTien": 12, "donGia": 680000 },
+        { "idSP": "S02", "soThungGiao": 20, "soThungTinhTien": 20, "donGia": 10000 }
+      ],
+      "congNoTruoc": 8000000,
+      "daThanhToan": 5000000,
+      "chietKhau": 0,
+      "ghiChu": "",
+      "trangThai": "cho_thanh_toan"
+    },
+    {
+      "id": "DH005",
+      "soDH": "DH-2602025",
+      "ngay": "2026-02-25",
+      "idKhachHang": "KH007",
+      "nguoiTao": "U002",
+      "chiTiet": [
+        { "idSP": "S04", "soThungGiao": 25, "soThungTinhTien": 25, "donGia": 680000 },
+        { "idSP": "S09", "soThungGiao": 5, "soThungTinhTien": 5, "donGia": 870000 }
+      ],
+      "congNoTruoc": 15000000,
+      "daThanhToan": 10000000,
+      "chietKhau": 500000,
+      "ghiChu": "",
+      "trangThai": "nhap"
+    },
+    {
+      "id": "DH006",
+      "soDH": "DH-2603005",
+      "ngay": "2026-03-05",
+      "idKhachHang": "KH004",
+      "nguoiTao": "U002",
+      "chiTiet": [
+        { "idSP": "S04", "soThungGiao": 40, "soThungTinhTien": 40, "donGia": 680000 },
+        { "idSP": "S03", "soThungGiao": 15, "soThungTinhTien": 15, "donGia": 800000 }
+      ],
+      "congNoTruoc": 72000000,
+      "daThanhToan": 60000000,
+      "chietKhau": 2000000,
+      "ghiChu": "Đơn lớn tháng 3",
+      "trangThai": "nhap"
+    },
+    {
+      "id": "DH007",
+      "soDH": "DH-2603020",
+      "ngay": "2026-03-20",
+      "idKhachHang": "KH008",
+      "nguoiTao": "U002",
+      "chiTiet": [
+        { "idSP": "S04", "soThungGiao": 18, "soThungTinhTien": 18, "donGia": 680000 },
+        { "idSP": "S05", "soThungGiao": 10, "soThungTinhTien": 10, "donGia": 85000 }
+      ],
+      "congNoTruoc": 5000000,
+      "daThanhToan": 5000000,
+      "chietKhau": 0,
+      "ghiChu": "",
+      "trangThai": "hoan_thanh"
+    }
+  ],
+
+  "dashboard": {
+    "doanhThuQuy": 5200710683,
+    "soThungBan": 48072,
+    "congNo": 2082290665,
+    "tienMat": 1756385252,
+    "topSanPham": [
+      { "maSP": "S04", "tenSP": "An Hạ xá", "doanhThu": 3098954169, "soThung": 48072 },
+      { "maSP": "S03", "tenSP": "Khánh An xá", "doanhThu": 820000000, "soThung": 1025 },
+      { "maSP": "S09", "tenSP": "Gà bóng bò xá", "doanhThu": 435000000, "soThung": 500 },
+      { "maSP": "S01", "tenSP": "Khánh An 1kg", "doanhThu": 378000000, "soThung": 4200 },
+      { "maSP": "S07", "tenSP": "Gà bóng bò 1kg", "doanhThu": 250000000, "soThung": 2500 }
+    ],
+    "doanhThuTheoKhuVuc": [
+      { "khuVuc": "SG", "doanhThu": 1040142136 },
+      { "khuVuc": "AG", "doanhThu": 936127922 },
+      { "khuVuc": "CT", "doanhThu": 832113708 },
+      { "khuVuc": "TG", "doanhThu": 624085281 },
+      { "khuVuc": "LA", "doanhThu": 520071068 },
+      { "khuVuc": "DN", "doanhThu": 416056854 },
+      { "khuVuc": "VL", "doanhThu": 416056854 },
+      { "khuVuc": "DT", "doanhThu": 416056860 }
+    ],
+    "doanhThuTheoThang": [
+      { "thang": "T1/2026", "doanhThu": 1560213204 },
+      { "thang": "T2/2026", "doanhThu": 1716234525 },
+      { "thang": "T3/2026", "doanhThu": 1924262954 }
+    ],
+    "congNoKhachHang": [
+      { "maKH": "KH004", "tenKH": "Đại lý Cần Thơ Phát", "khuVuc": "CT", "congNo": 72000000 },
+      { "maKH": "KH002", "tenKH": "Siêu thị Xanh An Giang", "khuVuc": "AG", "congNo": 48500000 },
+      { "maKH": "KH007", "tenKH": "Đại lý Long An Xanh", "khuVuc": "LA", "congNo": 31500000 },
+      { "maKH": "KH006", "tenKH": "Chay Tịnh Tiền Giang", "khuVuc": "TG", "congNo": 22000000 },
+      { "maKH": "KH008", "tenKH": "Thực Dưỡng Đà Nẵng", "khuVuc": "DN", "congNo": 18000000 }
+    ]
+  }
+}
